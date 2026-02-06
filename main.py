@@ -3,67 +3,88 @@ from fastapi import FastAPI, HTTPException
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 import os
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
+from enum import Enum
+from fastapi import FastAPI
+from schemas import GenreURLChoices,BandBase,BandCreate,BandWithID
 
-# Carga las variables del archivo .env
-load_dotenv()
+app = FastAPI()
 
-# Lee los valores
-sqlite_url2 = os.getenv("sqlite_url")
+# Definición de las opciones válidas (Segunda imagen)
+class GenreURLChoices(str, Enum):
+    ROCK = 'rock'
+    ELECTRONIC = 'electronic'
+    METAL = 'metal'
+    HIP_HOP = 'hip-hop'
 
-if sqlite_url2 is None:
-    raise RuntimeError("sqlite_url no está definida en el archivo .env")
+# Endpoint unificado (Imagen 5)
+@app.get('/bands')   #http://127.0.0.1:8000/bands?genre=rock
+async def bands(genre: Optional[GenreURLChoices] = None) -> List[BandWithID]:
+    if genre:
+        return [
+            BandWithID(**b) for b in BANDS if b['genre'].lower() == genre.value
+        ]
+    return [BandWithID(**b) for b in BANDS]
 
-class task(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    content: str = Field(index=True)
-#sqlite_url = f"postgresql://neondb_owner:npg_eFCE9Qm7txMX@ep-lively-silence-aine4h5t-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+# Endpoint usando el Enum para filtrar (Primera imagen)
+@app.get('/bands/genre/{genre}')  #aca no usa query parameter es path parameter
+async def bands_for_genre(genre: GenreURLChoices) -> list[dict]:
+    return [
+        b for b in BANDS if b['genre'].lower() == genre.value
+    ]
+BANDS = [
+    {'id': 1, 'name': 'The Kinks', 'genre': 'rock'},
+    {'id': 2, 'name': 'Aphex Twin', 'genre': 'electronic'},
+    {'id': 3, 'name': 'Slowdive', 'genre': 'shoegaze'},
+    {'id': 4, 'name': 'Wu-Tang Clan', 'genre': 'hip-hop','albums':[{'title':'Titulo del album','release_date':'1971-07-21'}]},
+]
 
-# The engine is the central object to manage the database connection
-# 
-engine = create_engine(sqlite_url2, echo=True)
 
+# --- ENDPOINTS ---
 
-
+# Listar bandas con filtros de Género y Álbumes (Imagen 7, 11)
+@app.get('/bands')
+async def bands(
+    genre: Optional[GenreURLChoices] = None,
+    has_albums: bool = False
+) -> List[BandWithID]:
+    band_list = [BandWithID(**b) for b in BANDS]
     
-# Function to create the database and tables on application startup 
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Lógica al arrancar (Startup)
-    print("Iniciando aplicación y creando tablas...")
-    SQLModel.metadata.create_all(engine, checkfirst=True)
+    if genre:
+        band_list = [
+            b for b in band_list if b.genre.lower() == genre.value
+        ]
     
-    yield  # <--- Esto separa el arranque del apagado
-    
-    # Lógica al cerrar (Shutdown)
-    print("Cerrando aplicación...")
-
-# 2. Pasa la función SIN paréntesis al inicializar FastAPI
-app = FastAPI(lifespan=lifespan)
-
-# Dependency to get a database session for each request
-#def get_session():
- #   with Session(engine) as session:
-  #      yield session
- 
-# Path operation to create a new task
-@app.post("/tasks/")
-def create_task(task_param: task):
-    with Session(engine) as session:
-        session.add(task_param)
-        session.commit()
-        session.refresh(task_param) # Refresh to get the generated ID from the DB
-        return task_param
-
-# Path operation to read all tasks
-@app.get("/tasks/")
-def read_tasks():
-    with Session(engine) as session:
-           statement = select(task)
-           tasks= session.exec(statement).all()
-           return tasks
+    if has_albums:
+        band_list = [b for b in band_list if len(b.albums) > 0]
         
+    return band_list
+
+@app.get('/bands/{band_id}')
+async def band(band_id: int) -> BandWithID:
+    band = next((BandWithID(**b) for b in BANDS if b['id'] == band_id), None)
+    if band is None:
+        # Manejo de error 404
+        raise HTTPException(status_code=404, detail='Band not found')
+    return band
+
+@app.get('/bands/genre/{genre}')
+async def bands_for_genre(genre: GenreURLChoices) -> list[dict]:
+    print("entra")
+    return [
+        b for b in BANDS if b['genre'].lower() == genre.value
+    ]
+    
+    
+@app.post('/bands')
+async def create_band(band_data: BandCreate) -> BandWithID:
+    # Generamos un nuevo ID basado en el último elemento
+    new_id = BANDS[-1]['id'] + 1 if BANDS else 1
+    
+    # Creamos el nuevo objeto combinando el ID y los datos validados
+    # model_dump() convierte el modelo de Pydantic en un diccionario
+    new_band = BandWithID(id=new_id, **band_data.model_dump())
+    
+    # Guardamos en nuestra "BD" (convertimos a dict para mantener consistencia)
+    BANDS.append(new_band.model_dump())
+    
+    return new_band
