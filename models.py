@@ -21,7 +21,7 @@ class AlbumBase(SQLModel):
     release_date: date
     band_id:int=Field(foreign_key="band.id")
 
-class Album(AlbumBase, table=true):
+class Album(AlbumBase, table=True):
     id:int=Field(default=None,primary_key=True)
     band:Band=Relationship(back_populates="albums")
     
@@ -38,7 +38,7 @@ class BandCreate(BandBase):
     def title_case_genre(cls, value):
         return value.title()
 
-class Band(BandBase,table=true):
+class Band(BandBase,table=True):
     id: int=Field(default=None,primary_key=true)
     albums:list[Album]=Relationship(back_populates="band")
 # 4. CUARTO: Forzar la reconstrucción de modelos
