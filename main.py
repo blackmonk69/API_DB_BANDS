@@ -1,5 +1,5 @@
-from typing import Optional, List
-from fastapi import FastAPI, HTTPException
+from typing import Annotated, Optional, List
+from fastapi import FastAPI, HTTPException, Path, Query
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 import os
 from contextlib import asynccontextmanager
@@ -23,23 +23,22 @@ BANDS = [
 @app.get('/bands')
 async def bands(
     genre: GenreURLChoices | None = None,
-    has_albums: bool = False
-) -> list[BandWithID]:
-    print("entra")
+    q: Annotated[str|None,Query (max_length=10)]=None) -> list[BandWithID]:
+    #print("entra")
     band_list = [BandWithID(**b) for b in BANDS]
 
     if genre:
         band_list = [
             b for b in band_list if b.genre.lower() == genre.value
         ]
-        print ("entra2")
-
-    if has_albums:
-        band_list = [b for b in band_list if len(b.albums) > 0]
+        #print ("entra2")
+   #filtramos las bandas
+    if q:
+       band_list=[b for b in band_list if q.lower() in b.name.lower()]
     return band_list
 
 @app.get('/bands/{band_id}')
-async def band(band_id: int) -> BandWithID:
+async def band(band_id: Annotated [int, Path (title="The Band ID")]) -> BandWithID:
     band = next((BandWithID(**b) for b in BANDS if b['id'] == band_id), None)
     if band is None:
         # Manejo de error 404
