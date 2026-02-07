@@ -5,36 +5,14 @@ import os
 from contextlib import asynccontextmanager
 from enum import Enum
 from fastapi import FastAPI
-from schemas import GenreURLChoices,BandBase,BandCreate,BandWithID
+from schemas import GenreURLChoices,BandCreate,BandWithID
 
 app = FastAPI()
 
-# Definición de las opciones válidas (Segunda imagen)
-class GenreURLChoices(str, Enum):
-    ROCK = 'rock'
-    ELECTRONIC = 'electronic'
-    METAL = 'metal'
-    HIP_HOP = 'hip-hop'
-
-# Endpoint unificado (Imagen 5)
-@app.get('/bands')   #http://127.0.0.1:8000/bands?genre=rock
-async def bands(genre: Optional[GenreURLChoices] = None) -> List[BandWithID]:
-    if genre:
-        return [
-            BandWithID(**b) for b in BANDS if b['genre'].lower() == genre.value
-        ]
-    return [BandWithID(**b) for b in BANDS]
-
-# Endpoint usando el Enum para filtrar (Primera imagen)
-@app.get('/bands/genre/{genre}')  #aca no usa query parameter es path parameter
-async def bands_for_genre(genre: GenreURLChoices) -> list[dict]:
-    return [
-        b for b in BANDS if b['genre'].lower() == genre.value
-    ]
 BANDS = [
     {'id': 1, 'name': 'The Kinks', 'genre': 'rock'},
     {'id': 2, 'name': 'Aphex Twin', 'genre': 'electronic'},
-    {'id': 3, 'name': 'Slowdive', 'genre': 'shoegaze'},
+    {'id': 3, 'name': 'Slowdive', 'genre': 'metal'},
     {'id': 4, 'name': 'Wu-Tang Clan', 'genre': 'hip-hop','albums':[{'title':'Titulo del album','release_date':'1971-07-21'}]},
 ]
 
@@ -44,19 +22,20 @@ BANDS = [
 # Listar bandas con filtros de Género y Álbumes (Imagen 7, 11)
 @app.get('/bands')
 async def bands(
-    genre: Optional[GenreURLChoices] = None,
+    genre: GenreURLChoices | None = None,
     has_albums: bool = False
-) -> List[BandWithID]:
+) -> list[BandWithID]:
+    print("entra")
     band_list = [BandWithID(**b) for b in BANDS]
-    
+
     if genre:
         band_list = [
             b for b in band_list if b.genre.lower() == genre.value
         ]
-    
+        print ("entra2")
+
     if has_albums:
         band_list = [b for b in band_list if len(b.albums) > 0]
-        
     return band_list
 
 @app.get('/bands/{band_id}')
