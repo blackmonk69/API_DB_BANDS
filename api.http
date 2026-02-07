@@ -1,0 +1,17 @@
+POST http://127.0.0.1:8000/bands/
+content-type: application/json
+
+{
+    "name": "Boards of Canadass",
+    "genre": "Electronic",
+    "album": [
+        {
+            "title": "Tomorrow's Harvest",
+            "release_date": "2013-01-01"
+        },
+        {
+            "title": "Music Has The Right To Children",
+            "release_date": "1998-01-01"
+        }
+    ]
+}

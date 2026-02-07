@@ -19,7 +19,7 @@ class GenreURLChoices(str, Enum):
 class AlbumBase(SQLModel):
     title: str
     release_date: date
-    band_id:int=Field(foreign_key="band.id")
+    band_id:int | None =Field(foreign_key="band.id")
 
 class Album(AlbumBase, table=True):
     id:int=Field(default=None,primary_key=True)
@@ -36,7 +36,7 @@ class BandCreate(BandBase):
     albums: List[AlbumBase]|None=None  # Aquí ya conoce qué es Album
     @field_validator('genre', mode='before')
     def title_case_genre(cls, value):
-        return value.title()
+        return value.lower()
 
 class Band(BandBase,table=True):
     id: int=Field(default=None,primary_key=true)
