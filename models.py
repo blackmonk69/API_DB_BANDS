@@ -41,6 +41,7 @@ class BandCreate(BandBase):
 class Band(BandBase,table=True):
     id: int=Field(default=None,primary_key=true)
     albums:list[Album]=Relationship(back_populates="band")
+    nr_members:int|None=None
 # 4. CUARTO: Forzar la reconstrucción de modelos
 # Esto resuelve el error "not fully defined"
 BandBase.model_rebuild()

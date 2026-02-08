@@ -2,7 +2,7 @@ POST http://127.0.0.1:8000/bands/
 content-type: application/json
 
 {
-    "name": "Boards of Canadass",
+    "name": "Boards of Brazil",
     "genre": "Electronic",
     "album": [
         {
@@ -17,7 +17,7 @@ content-type: application/json
 }
 
 ###
-GET http://127.0.0.1:8000/bands/2
+GET http://127.0.0.1:8000/bands/3
 ###
 GET http://127.0.0.1:8000/bands
 

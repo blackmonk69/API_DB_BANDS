@@ -2,26 +2,15 @@ from typing import Annotated, Optional, List
 from fastapi import FastAPI, HTTPException,Path,Query,Depends
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 import os
-from contextlib import asynccontextmanager
+
 from enum import Enum
 from fastapi import FastAPI
 from models import GenreURLChoices,BandCreate,Band,Album
 from db import init_db,get_session
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Esto se ejecuta cuando arranca la API
-    init_db() 
-    yield
 
-app = FastAPI(lifespan=lifespan)
 
-BANDS = [
-    {'id': 1, 'name': 'The Kinks', 'genre': 'rock'},
-    {'id': 2, 'name': 'Aphex Twin', 'genre': 'electronic'},
-    {'id': 3, 'name': 'Slowdive', 'genre': 'metal'},
-    {'id': 4, 'name': 'Wu-Tang Clan', 'genre': 'hip-hop','albums':[{'title':'Titulo del album','release_date':'1971-07-21'}]},
-]
+app = FastAPI()
 
 # # --- ENDPOINTS ---
 
