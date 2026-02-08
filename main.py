@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Annotated, Optional, List
 from fastapi import FastAPI, HTTPException,Path,Query,Depends
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 import os
@@ -25,31 +25,29 @@ BANDS = [
 
 # # --- ENDPOINTS ---
 
-# # Listar bandas con filtros de Género y Álbumes (Imagen 7, 11)
-# @app.get('/bands')
-# async def bands(
-#     genre: GenreURLChoices | None = None,
-#     q: Annotated[str|None,Query (max_length=10)]=None) -> list[BandWithID]: #the annotation agrega metadata que se puede usar
-#     #print("entra")
-#     band_list = [BandWithID(**b) for b in BANDS]
+# Listar bandas con filtros de Género y Álbumes (Imagen 7, 11)
+@app.get('/bands')
+async def bands(
+    genre: GenreURLChoices | None = None,
+    q: Annotated[str|None,Query (max_length=10)]=None,session: Session = Depends(get_session)) -> list[Band]: #the annotation agrega metadata que se puede usar
+    band_list=session.exec(select(Band)).all()
+    if genre:
+        band_list = [
+            b for b in band_list if b.genre.lower() == genre.value
+        ]
+        #print ("entra2")
+   #filtramos las bandas
+    if q:
+       band_list=[b for b in band_list if q.lower() in b.name.lower()]
+    return band_list
 
-#     if genre:
-#         band_list = [
-#             b for b in band_list if b.genre.lower() == genre.value
-#         ]
-#         #print ("entra2")
-#    #filtramos las bandas
-#     if q:
-#        band_list=[b for b in band_list if q.lower() in b.name.lower()]
-#     return band_list
-
-# @app.get('/bands/{band_id}')
-# async def band(band_id: Annotated [int, Path (title="The Band ID")]) -> BandWithID:
-#     band = next((BandWithID(**b) for b in BANDS if b['id'] == band_id), None)
-#     if band is None:
-#         # Manejo de error 404
-#         raise HTTPException(status_code=404, detail='Band not found')
-#     return band
+@app.get('/bands/{band_id}')
+async def band(band_id: Annotated [int, Path (title="The Band ID")],session: Session = Depends(get_session)) -> Band:
+     band=session.get(Band,band_id)  #trae de la entidad banda con ese primary key  
+     if band is None:
+         # Manejo de error 404
+         raise HTTPException(status_code=404, detail='Band not found')
+     return band
 
 # @app.get('/bands/genre/{genre}')
 # async def bands_for_genre(genre: GenreURLChoices) -> list[dict]:
