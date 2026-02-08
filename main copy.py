@@ -17,7 +17,7 @@ if sqlite_url2 is None:
 class task(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     content: str = Field(index=True)
-#sqlite_url = f"postgresql://neondb_owner:npg_eFCE9Qm7txMX@ep-lively-silence-aine4h5t-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+#sqlite_url = f"aca va la cadena de conexion a la base de datos"    
 
 # The engine is the central object to manage the database connection
 # 
